@@ -317,11 +317,11 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 const fetchDashboardData = async () => {
   try {
     const [channelsRes, notifsRes, pluginsRes, reposRes, contextRes] = await Promise.all([
-      axios.get('/api/channels', { headers: getHeaders() }),
-      axios.get('/api/notifications', { headers: getHeaders() }),
+      axios.get('/api/channels/', { headers: getHeaders() }),
+      axios.get('/api/notifications/', { headers: getHeaders() }),
       axios.get('/api/channels/plugins', { headers: getHeaders() }),
-      axios.get('/api/repositories', { headers: getHeaders() }),
-      axios.get('/api/context', { headers: getHeaders() })
+      axios.get('/api/repositories/', { headers: getHeaders() }),
+      axios.get('/api/context/', { headers: getHeaders() })
     ])
     
     channels.value = channelsRes.data
@@ -489,7 +489,7 @@ const saveNotification = async () => {
       await axios.put(`/api/notifications/${editingNotificationId.value}`, payload, { headers: getHeaders() })
       showToast('Notification updated successfully')
     } else {
-      await axios.post('/api/notifications', payload, { headers: getHeaders() })
+      await axios.post('/api/notifications/', payload, { headers: getHeaders() })
       showToast('Notification created successfully')
     }
     showNotificationModal.value = false

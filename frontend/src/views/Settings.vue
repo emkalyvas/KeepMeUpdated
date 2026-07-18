@@ -410,11 +410,11 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 const fetchSettingsData = async () => {
   try {
     const [channelsRes, dsRes, cvRes, pluginsRes, reposRes] = await Promise.all([
-      axios.get('/api/channels', { headers: getHeaders() }),
-      axios.get('/api/data-sources', { headers: getHeaders() }),
-      axios.get('/api/custom-variables', { headers: getHeaders() }),
+      axios.get('/api/channels/', { headers: getHeaders() }),
+      axios.get('/api/data-sources/', { headers: getHeaders() }),
+      axios.get('/api/custom-variables/', { headers: getHeaders() }),
       axios.get('/api/channels/plugins', { headers: getHeaders() }), // This endpoint returns ALL plugins now
-      axios.get('/api/repositories', { headers: getHeaders() })
+      axios.get('/api/repositories/', { headers: getHeaders() })
     ])
     
     channels.value = channelsRes.data
@@ -438,7 +438,7 @@ onMounted(() => {
 // Repositories logic
 const addRepository = async () => {
   try {
-    await axios.post('/api/repositories', repoForm.value, { headers: getHeaders() })
+    await axios.post('/api/repositories/', repoForm.value, { headers: getHeaders() })
     showAddRepoModal.value = false
     repoForm.value = { name: '', url: '' }
     await fetchSettingsData()
@@ -542,7 +542,7 @@ const saveChannel = async () => {
     if (editingChannel.value) {
       await axios.put(`/api/channels/${editingChannel.value.id}`, channelForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('/api/channels', channelForm.value, { headers: getHeaders() })
+      await axios.post('/api/channels/', channelForm.value, { headers: getHeaders() })
     }
     showChannelModal.value = false
     await fetchSettingsData()
@@ -606,7 +606,7 @@ const saveDataSource = async () => {
     if (editingDataSource.value) {
       await axios.put(`/api/data-sources/${editingDataSource.value.id}`, dsForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('/api/data-sources', dsForm.value, { headers: getHeaders() })
+      await axios.post('/api/data-sources/', dsForm.value, { headers: getHeaders() })
     }
     showDataSourceModal.value = false
     await fetchSettingsData()
@@ -669,7 +669,7 @@ const saveVariable = async () => {
     if (editingVariable.value) {
       await axios.put(`/api/custom-variables/${editingVariable.value.id}`, cvForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('/api/custom-variables', cvForm.value, { headers: getHeaders() })
+      await axios.post('/api/custom-variables/', cvForm.value, { headers: getHeaders() })
     }
     showVariableModal.value = false
     await fetchSettingsData()
