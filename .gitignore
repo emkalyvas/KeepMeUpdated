@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Node
+node_modules/
+dist/
+build/
+.npm/
+
+# IDEs / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# KeepMeUpdated Data
+keepmeupdated_data/
+backend/app/data/

@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+pydantic
+pydantic[email]
+passlib
+bcrypt==3.2.2
+python-jose
+python-multipart
+apscheduler
+httpx
+python-dateutil
+croniter
