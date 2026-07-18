@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -60,7 +60,10 @@ class NotificationBase(BaseModel):
     schedule_type: str
     schedule_expr: str
     parameters: Dict[str, Any] = {}
+    exclusions: Optional[List[Dict[str, Any]]] = []
+    start_time: Optional[datetime] = None
     is_active: bool = True
+    execution_count: int = 0
 
 class NotificationCreate(NotificationBase):
     pass
@@ -72,6 +75,8 @@ class NotificationUpdate(BaseModel):
     schedule_type: Optional[str] = None
     schedule_expr: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = None
+    exclusions: Optional[List[Dict[str, Any]]] = None
+    start_time: Optional[datetime] = None
     is_active: Optional[bool] = None
 
 class NotificationResponse(NotificationBase):
@@ -100,3 +105,55 @@ class RepositoryResponse(RepositoryBase):
 
     class Config:
         from_attributes = True
+
+class DataSourceBase(BaseModel):
+    plugin_id: str
+    name: str
+    config: Dict[str, Any] = {}
+    is_active: bool = False
+
+class DataSourceCreate(DataSourceBase):
+    pass
+
+class DataSourceUpdate(BaseModel):
+    name: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+class DataSourceResponse(DataSourceBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CustomVariableBase(BaseModel):
+    name: str
+    value: str
+
+class CustomVariableCreate(CustomVariableBase):
+    pass
+
+class CustomVariableUpdate(BaseModel):
+    name: Optional[str] = None
+    value: Optional[str] = None
+
+class CustomVariableResponse(CustomVariableBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- Plugin Schemas ---
+class PluginInstallRequest(BaseModel):
+    plugin_id: str
+    version: str
+    full_file_url: str
+
+class PluginUninstallRequest(BaseModel):
+    plugin_id: str

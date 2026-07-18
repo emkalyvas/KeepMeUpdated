@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="frontend/public/logo.png" alt="KeepMeUpdated Logo" width="200" />
+</div>
+
 # KeepMeUpdated
 
 A powerful, self-hosted scheduling and notification platform. KeepMeUpdated allows you to centralize your notifications across various channels (like Email, Gotify, etc.) and schedule them down to the minute or via recurring cron and interval rules.
@@ -6,7 +10,8 @@ Built with a modular Plugin Architecture, you can extend your notification desti
 
 ## Features
 - **Centralized Notification Engine**: Schedule alerts via Specific Time, Intervals, or Cron Expressions.
-- **Dynamic Plugin Architecture**: Download and run third-party notification channels (like Gotify) dynamically at runtime.
+- **Dynamic Plugin Architecture**: Download and run third-party Notification Channels (like Gotify) and Data Sources (like OpenWeatherMap) dynamically at runtime.
+- **Context Variables**: Enrich your notification payloads with dynamic data variables.
 - **Modern UI**: A beautiful Vue 3 + Tailwind CSS dark-mode dashboard with custom-built sleek Modals.
 - **Fully Dockerized**: Spin up the backend and frontend effortlessly with Docker Compose.
 
@@ -39,7 +44,11 @@ Built with a modular Plugin Architecture, you can extend your notification desti
 - **Plugins**: A dynamic `PluginManager` uses Python's `importlib` to download and load `.py` plugin files from remote `registry.json` endpoints into the application state at runtime.
 
 ## Writing a Plugin
-You can build a plugin by creating a Python file that inherits from `BaseNotificationChannel`. Your plugin must implement schemas for configuring the channel and schemas for dispatching the notification. Place your plugin script and a `registry.json` file on a simple HTTP server to be fetched by the app.
+You can build a plugin by creating a Python file that inherits from either `BaseNotificationChannel` or `BaseDataSourcePlugin`. 
+- **Channels** implement schemas for configuring the destination and dispatching the notification.
+- **Data Sources** implement schemas for fetching dynamic data and returning context variables.
+
+Place your plugin script and a `registry.json` file on a simple HTTP server to be fetched by the app.
 
 ## License
 MIT

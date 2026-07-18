@@ -3,7 +3,10 @@
     <header class="bg-gray-800 shadow border-b border-gray-700">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-8">
-          <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">KeepMeUpdated</h1>
+          <div class="flex items-center space-x-3">
+            <img src="/logo.png" alt="KeepMeUpdated Logo" class="w-14 h-14 object-contain drop-shadow-md" />
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">KeepMeUpdated</h1>
+          </div>
           <nav class="hidden md:flex space-x-4">
             <router-link to="/" class="text-white bg-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</router-link>
             <router-link to="/settings" class="text-gray-400 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Settings</router-link>
@@ -31,10 +34,11 @@
               </div>
               <p class="text-gray-300 text-sm mb-2 line-clamp-2">{{ notif.parameters?.body || notif.payload }}</p>
               <div class="text-xs text-indigo-300">
-                Next run: {{ notif.next_run_at ? new Date(notif.next_run_at + 'Z').toLocaleString() : 'Not scheduled' }}
+                Next run: {{ notif.next_run_at ? new Date(notif.next_run_at + 'Z').toLocaleString() : (notif.is_active ? 'Never' : 'Not scheduled') }}
               </div>
             </div>
             <div class="flex items-center space-x-4">
+              <button @click="openEditNotification(notif)" class="text-gray-400 hover:text-indigo-400 transition-colors text-sm">Edit</button>
               <button @click="confirmDeleteNotification(notif)" class="text-gray-400 hover:text-red-400 transition-colors text-sm">Delete</button>
               <button @click="toggleNotification(notif)" 
                       :class="notif.is_active ? 'bg-red-500/20 text-red-400 hover:bg-red-500/40 border-red-500/50' : 'bg-green-500/20 text-green-400 hover:bg-green-500/40 border-green-500/50'" 
@@ -86,12 +90,17 @@
 
     <!-- Notification Modal -->
     <div v-if="showNotificationModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div class="bg-gray-800 p-8 rounded-2xl max-w-lg w-full border border-gray-600 shadow-2xl overflow-y-auto max-h-[90vh]">
-        <h3 class="text-2xl font-bold mb-6 text-white">Create Notification</h3>
-        <form @submit.prevent="saveNotification" class="space-y-4">
+      <div class="bg-gray-800 p-8 pt-6 pb-6 rounded-2xl max-w-5xl w-full border border-gray-600 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        
+        <h3 class="text-2xl font-bold mb-6 text-white shrink-0">{{ isEditing ? 'Edit Notification' : 'Create Notification' }}</h3>
+        
+        <div class="flex-1 flex flex-col md:flex-row gap-8 overflow-hidden min-h-0">
+          <!-- Form Column -->
+          <div class="flex-1 overflow-y-auto pr-4 custom-scrollbar">
+            <form id="notification-form" @submit.prevent="saveNotification" class="space-y-4 pb-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Target Channel</label>
-            <select v-model="notificationForm.channel_id" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select v-model="notificationForm.channel_id" @change="notificationForm.parameters = {}" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option disabled value="">Select a channel...</option>
               <option v-for="channel in channels" :key="channel.id" :value="channel.id">{{ channel.name }} ({{ channel.plugin_id }})</option>
             </select>
@@ -110,6 +119,9 @@
             <div v-for="(field, key) in selectedChannelPluginSchema.properties" :key="key">
               <label class="block text-sm font-medium text-gray-300 mb-1">{{ field.title || key }} <span v-if="selectedChannelPluginSchema.required?.includes(key)" class="text-red-400">*</span></label>
               <textarea v-if="key === 'body' || (field.type === 'string' && field.format === 'textarea')" v-model="notificationForm.parameters[key]" :required="selectedChannelPluginSchema.required?.includes(key)" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+              <select v-else-if="field.enum" v-model="notificationForm.parameters[key]" :required="selectedChannelPluginSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option v-for="option in field.enum" :key="option" :value="option">{{ option }}</option>
+              </select>
               <input v-else-if="field.type === 'string' && field.format !== 'password'" v-model="notificationForm.parameters[key]" type="text" :required="selectedChannelPluginSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <input v-else-if="field.type === 'string' && field.format === 'password'" v-model="notificationForm.parameters[key]" type="password" :required="selectedChannelPluginSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <input v-else-if="field.type === 'integer'" v-model.number="notificationForm.parameters[key]" type="number" :required="selectedChannelPluginSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -168,16 +180,83 @@
             </div>
           </div>
           
+          <div v-if="notificationForm.schedule_type !== 'specific_time'" class="mt-4">
+            <label class="block text-sm font-medium text-gray-300 mb-1">Start Time (Optional)</label>
+            <input v-model="notificationForm.start_time" type="datetime-local" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <p class="text-xs text-gray-400 mt-1">The schedule will begin from this time. Leave empty to start immediately.</p>
+          </div>
+          
           <div class="flex items-center mt-2">
              <input v-model="notificationForm.is_active" type="checkbox" class="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 focus:ring-2">
              <span class="ml-2 text-sm text-gray-300">Active Immediately</span>
           </div>
-          
-          <div class="flex justify-end gap-3 mt-8">
-            <button type="button" @click="showNotificationModal = false" class="px-5 py-2 text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">Cancel</button>
-            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors shadow-md">Create</button>
+
+          <div class="space-y-4 mt-6">
+            <h4 class="text-lg font-semibold border-b border-gray-700 pb-2 flex justify-between items-center">
+              Exclusions (Optional)
+            </h4>
+            <div class="space-y-3">
+              <div v-for="(exc, index) in notificationForm.exclusions" :key="index" class="bg-gray-700 p-3 rounded-lg border border-gray-600 flex items-center gap-3">
+                <select v-model="exc.type" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="time">Time Range</option>
+                  <option value="weekday">Days of Week</option>
+                </select>
+                
+                <div v-if="exc.type === 'time'" class="flex items-center gap-2 flex-grow">
+                  <input v-model="exc.start" type="time" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-white text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <span class="text-gray-400">to</span>
+                  <input v-model="exc.end" type="time" class="bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-white text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div v-else-if="exc.type === 'weekday'" class="flex items-center gap-1 flex-grow flex-wrap">
+                  <label v-for="(day, dIndex) in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="dIndex" class="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded text-xs cursor-pointer border border-gray-600 hover:border-indigo-500" :class="{'border-indigo-500 bg-indigo-900/30': exc.days?.includes(dIndex)}">
+                    <input type="checkbox" :value="dIndex" v-model="exc.days" class="hidden">
+                    {{ day }}
+                  </label>
+                </div>
+                
+                <button type="button" @click="notificationForm.exclusions.splice(index, 1)" class="text-red-400 hover:text-red-300 ml-auto">
+                  &times;
+                </button>
+              </div>
+            </div>
+            <button type="button" @click="addExclusion" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors">+ Add Exclusion Rule</button>
           </div>
-        </form>
+          
+            </form>
+          </div>
+          <!-- Context Variables Column -->
+          <div class="w-full md:w-80 bg-gray-900 rounded-xl border border-gray-700 flex flex-col overflow-hidden min-h-0">
+            <div class="p-5 pb-0 shrink-0">
+              <h4 class="text-lg font-bold text-white mb-2">Context Variables</h4>
+              <p class="text-sm text-gray-400 mb-4">Use these variables in your notification title or payload. They will be dynamically replaced when the notification runs.</p>
+            </div>
+            <div class="p-5 pt-2 flex-1 overflow-y-auto custom-scrollbar min-h-0">
+              <div v-if="contextVariables.length === 0" class="text-gray-500 text-sm italic">Loading variables...</div>
+              <div v-else class="space-y-6">
+                <div v-for="category in contextVariables" :key="category.category">
+                  <h5 class="text-indigo-400 font-semibold mb-2 uppercase text-xs tracking-wider border-b border-gray-800 pb-1">{{ category.category }}</h5>
+                  <ul class="space-y-3">
+                    <li v-for="variable in category.variables" :key="variable.name" class="bg-gray-800 p-3 rounded border border-gray-700">
+                      <div class="flex justify-between items-start mb-1">
+                        <span class="font-mono text-sm text-pink-300 select-all cursor-pointer hover:text-pink-200 transition-colors break-all" @click="copyToClipboard(`{${variable.name}}`)">{{"{"}}{{ variable.name }}{{"}"}}</span>
+                      </div>
+                      <p class="text-xs text-gray-400 mb-1 leading-snug">{{ variable.description }}</p>
+                      <p class="text-xs text-gray-500 font-mono italic break-words">Ex: {{ variable.example }}</p>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Footer Buttons -->
+        <div class="mt-6 pt-5 border-t border-gray-700 flex justify-end gap-3 shrink-0">
+          <button type="button" @click="showNotificationModal = false" class="px-5 py-2 text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">Cancel</button>
+          <button type="submit" form="notification-form" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors shadow-md">{{ isEditing ? 'Save Changes' : 'Create' }}</button>
+        </div>
+        
       </div>
     </div>
   </div>
@@ -197,7 +276,15 @@ const channels = ref([])
 const notifications = ref([])
 const availablePlugins = ref([])
 const repositories = ref([])
+const contextVariables = ref([])
 
+const showNotificationModal = ref(false)
+const isEditing = ref(false)
+const editingNotificationId = ref(null)
+const notificationForm = ref({ channel_id: '', title: '', payload: '', schedule_type: 'specific_time', schedule_expr: '', parameters: {}, exclusions: [], start_time: '', is_active: true })
+const specificTimeInputs = ref({ date: '', hour: '', minute: '' })
+const intervalInputs = ref({ value: 10, unit: 'minutes' })
+const cronInputs = ref({ min: '*', hour: '*', dom: '*', mon: '*', dow: '*' })
 const showSkipModal = ref(false)
 const selectedNotification = ref(null)
 
@@ -218,11 +305,7 @@ const selectedChannelPluginSchema = computed(() => {
   return plugin ? plugin.notification_schema : null
 })
 
-watch(() => notificationForm.value.channel_id, (newChannelId) => {
-  if (newChannelId) {
-    notificationForm.value.parameters = {}
-  }
-})
+
 
 const logout = () => {
   authStore.logout()
@@ -233,16 +316,18 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 
 const fetchDashboardData = async () => {
   try {
-    const [channelsRes, notifsRes, pluginsRes, reposRes] = await Promise.all([
+    const [channelsRes, notifsRes, pluginsRes, reposRes, contextRes] = await Promise.all([
       axios.get('http://localhost:8000/api/channels', { headers: getHeaders() }),
       axios.get('http://localhost:8000/api/notifications', { headers: getHeaders() }),
       axios.get('http://localhost:8000/api/channels/plugins', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/repositories', { headers: getHeaders() })
+      axios.get('http://localhost:8000/api/repositories', { headers: getHeaders() }),
+      axios.get('http://localhost:8000/api/context', { headers: getHeaders() })
     ])
     
     channels.value = channelsRes.data
     notifications.value = notifsRes.data
     availablePlugins.value = pluginsRes.data
+    contextVariables.value = contextRes.data
   } catch (error) {
     if (error.response?.status === 401) {
       logout()
@@ -255,6 +340,11 @@ const fetchDashboardData = async () => {
 onMounted(() => {
   fetchDashboardData()
 })
+
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text)
+  showToast('Copied to clipboard!', 'success')
+}
 
 const toggleNotification = async (notif) => {
   if (notif.is_active && (notif.schedule_type === 'cron' || notif.schedule_type === 'interval')) {
@@ -288,9 +378,15 @@ const confirmDeleteNotification = (notif) => {
   showConfirmModal.value = true
 }
 
-const handleSkipNext = () => {
-  showSkipModal.value = false
-  showToast(`Skipped next instance for: ${selectedNotification.value.title}`)
+const handleSkipNext = async () => {
+  try {
+    await axios.post(`http://localhost:8000/api/notifications/${selectedNotification.value.id}/skip`, {}, { headers: getHeaders() })
+    showSkipModal.value = false
+    await fetchDashboardData()
+    showToast(`Skipped next instance for: ${selectedNotification.value.title}`)
+  } catch(e) {
+    showToast('Failed to skip notification', 'error')
+  }
 }
 
 const handleDeactivateAll = async () => {
@@ -305,7 +401,9 @@ const handleDeactivateAll = async () => {
 }
 
 const openAddNotification = () => {
-  notificationForm.value = { channel_id: '', title: '', payload: '', schedule_type: 'specific_time', schedule_expr: '', parameters: {}, is_active: true }
+  isEditing.value = false
+  editingNotificationId.value = null
+  notificationForm.value = { channel_id: '', title: '', payload: '', schedule_type: 'specific_time', schedule_expr: '', parameters: {}, exclusions: [], start_time: '', is_active: true }
   
   const now = new Date()
   const offset = now.getTimezoneOffset() * 60000
@@ -320,9 +418,56 @@ const openAddNotification = () => {
   showNotificationModal.value = true
 }
 
+const openEditNotification = (notif) => {
+  isEditing.value = true
+  editingNotificationId.value = notif.id
+  
+  notificationForm.value = { 
+    channel_id: notif.channel_id, 
+    title: notif.title, 
+    payload: notif.payload || '', 
+    schedule_type: notif.schedule_type, 
+    schedule_expr: notif.schedule_expr, 
+    parameters: { ...notif.parameters }, 
+    exclusions: JSON.parse(JSON.stringify(notif.exclusions || [])).map(e => ({ ...e, tz_offset: e.tz_offset !== undefined ? e.tz_offset : new Date().getTimezoneOffset() })), 
+    start_time: notif.start_time ? new Date(new Date(notif.start_time + 'Z').getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
+    is_active: notif.is_active 
+  }
+  
+  if (notif.schedule_type === 'specific_time') {
+    try {
+      const d = new Date(notif.schedule_expr)
+      const offset = d.getTimezoneOffset() * 60000
+      const localDate = new Date(d.getTime() - offset).toISOString().slice(0, 16)
+      const [datePart, timePart] = localDate.split('T')
+      const [hh, mm] = timePart.split(':')
+      specificTimeInputs.value = { date: datePart, hour: hh, minute: mm }
+    } catch(e) {
+      console.error('Error parsing date:', e)
+    }
+  } else if (notif.schedule_type === 'interval') {
+    const parts = notif.schedule_expr.split(' ')
+    intervalInputs.value = { value: parseInt(parts[0]) || 10, unit: parts[1] || 'minutes' }
+  } else if (notif.schedule_type === 'cron') {
+    const parts = notif.schedule_expr.split(' ')
+    cronInputs.value = { min: parts[0] || '*', hour: parts[1] || '*', dom: parts[2] || '*', mon: parts[3] || '*', dow: parts[4] || '*' }
+  }
+  
+  showNotificationModal.value = true
+}
+
+const addExclusion = () => {
+  notificationForm.value.exclusions.push({ type: 'time', start: '22:00', end: '08:00', days: [], tz_offset: new Date().getTimezoneOffset() })
+}
+
 const saveNotification = async () => {
   try {
     const payload = { ...notificationForm.value }
+    if (payload.start_time) {
+      payload.start_time = new Date(payload.start_time).toISOString()
+    } else {
+      payload.start_time = null
+    }
     
     if (payload.schedule_type === 'specific_time') {
       const { date, hour, minute } = specificTimeInputs.value
@@ -340,10 +485,15 @@ const saveNotification = async () => {
       payload.schedule_expr = `${min} ${hour} ${dom} ${mon} ${dow}`
     }
     
-    await axios.post('http://localhost:8000/api/notifications', payload, { headers: getHeaders() })
+    if (isEditing.value) {
+      await axios.put(`http://localhost:8000/api/notifications/${editingNotificationId.value}`, payload, { headers: getHeaders() })
+      showToast('Notification updated successfully')
+    } else {
+      await axios.post('http://localhost:8000/api/notifications', payload, { headers: getHeaders() })
+      showToast('Notification created successfully')
+    }
     showNotificationModal.value = false
     await fetchDashboardData()
-    showToast('Notification created successfully')
   } catch(e) {
     showToast('Failed to save notification', 'error')
   }

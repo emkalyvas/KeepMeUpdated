@@ -22,13 +22,39 @@ async def read_channels(
     result = await db.execute(select(models.Channel).where(models.Channel.user_id == current_user.id))
     return result.scalars().all()
 
+@router.post("/test")
+async def test_channel(
+    channel_in: schemas.ChannelCreate,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    plugin_class = plugin_manager.get_channel_plugin(channel_in.plugin_id)
+    if not plugin_class:
+        raise HTTPException(status_code=400, detail="Invalid plugin_id")
+        
+    plugin_instance = plugin_class(channel_in.config)
+    if not plugin_instance.validate_config():
+        raise HTTPException(status_code=400, detail="Invalid configuration")
+        
+    try:
+        success = await plugin_instance.send(
+            title="KeepMeUpdated Test",
+            payload="This is a test notification from KeepMeUpdated.",
+            parameters={}
+        )
+        if success:
+            return {"status": "ok"}
+        else:
+            raise HTTPException(status_code=400, detail="Test notification failed to send")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/", response_model=schemas.ChannelResponse)
 async def create_channel(
     channel_in: schemas.ChannelCreate,
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user)
 ) -> Any:
-    plugin_class = plugin_manager.get_plugin(channel_in.plugin_id)
+    plugin_class = plugin_manager.get_channel_plugin(channel_in.plugin_id)
     if not plugin_class:
         raise HTTPException(status_code=400, detail="Invalid plugin_id")
         
@@ -64,7 +90,7 @@ async def update_channel(
         setattr(db_channel, field, value)
         
     if db_channel.is_active:
-        plugin_class = plugin_manager.get_plugin(db_channel.plugin_id)
+        plugin_class = plugin_manager.get_channel_plugin(db_channel.plugin_id)
         if plugin_class:
             plugin_instance = plugin_class(db_channel.config)
             if not plugin_instance.validate_config():

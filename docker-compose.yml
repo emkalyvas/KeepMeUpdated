@@ -13,6 +13,7 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - SQLALCHEMY_DATABASE_URL=sqlite+aiosqlite:////app/data/keepmeupdated.db
+      - DEFAULT_PLUGIN_REPO=https://github.com/emkalyvas/KeepMeUpdated-Plugins
 
   frontend:
     build:
