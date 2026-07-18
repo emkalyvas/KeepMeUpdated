@@ -12,3 +12,6 @@ apscheduler
 httpx
 python-dateutil
 croniter
+apprise
+paho-mqtt
+feedparser
