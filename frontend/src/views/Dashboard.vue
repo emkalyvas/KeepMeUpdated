@@ -317,11 +317,11 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 const fetchDashboardData = async () => {
   try {
     const [channelsRes, notifsRes, pluginsRes, reposRes, contextRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/channels', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/notifications', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/channels/plugins', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/repositories', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/context', { headers: getHeaders() })
+      axios.get('/api/channels', { headers: getHeaders() }),
+      axios.get('/api/notifications', { headers: getHeaders() }),
+      axios.get('/api/channels/plugins', { headers: getHeaders() }),
+      axios.get('/api/repositories', { headers: getHeaders() }),
+      axios.get('/api/context', { headers: getHeaders() })
     ])
     
     channels.value = channelsRes.data
@@ -352,7 +352,7 @@ const toggleNotification = async (notif) => {
     showSkipModal.value = true
   } else {
     try {
-      await axios.put(`http://localhost:8000/api/notifications/${notif.id}`, { is_active: !notif.is_active }, { headers: getHeaders() })
+      await axios.put(`/api/notifications/${notif.id}`, { is_active: !notif.is_active }, { headers: getHeaders() })
       await fetchDashboardData()
     } catch(e) { 
       showToast('Failed to toggle notification', 'error') 
@@ -366,7 +366,7 @@ const confirmDeleteNotification = (notif) => {
     message: `Are you sure you want to delete ${notif.title}?`,
     onConfirm: async () => {
       try {
-        await axios.delete(`http://localhost:8000/api/notifications/${notif.id}`, { headers: getHeaders() })
+        await axios.delete(`/api/notifications/${notif.id}`, { headers: getHeaders() })
         showConfirmModal.value = false
         await fetchDashboardData()
         showToast('Notification deleted')
@@ -380,7 +380,7 @@ const confirmDeleteNotification = (notif) => {
 
 const handleSkipNext = async () => {
   try {
-    await axios.post(`http://localhost:8000/api/notifications/${selectedNotification.value.id}/skip`, {}, { headers: getHeaders() })
+    await axios.post(`/api/notifications/${selectedNotification.value.id}/skip`, {}, { headers: getHeaders() })
     showSkipModal.value = false
     await fetchDashboardData()
     showToast(`Skipped next instance for: ${selectedNotification.value.title}`)
@@ -391,7 +391,7 @@ const handleSkipNext = async () => {
 
 const handleDeactivateAll = async () => {
   try {
-    await axios.put(`http://localhost:8000/api/notifications/${selectedNotification.value.id}`, { is_active: false }, { headers: getHeaders() })
+    await axios.put(`/api/notifications/${selectedNotification.value.id}`, { is_active: false }, { headers: getHeaders() })
     showSkipModal.value = false
     await fetchDashboardData()
     showToast('Deactivated completely')
@@ -486,10 +486,10 @@ const saveNotification = async () => {
     }
     
     if (isEditing.value) {
-      await axios.put(`http://localhost:8000/api/notifications/${editingNotificationId.value}`, payload, { headers: getHeaders() })
+      await axios.put(`/api/notifications/${editingNotificationId.value}`, payload, { headers: getHeaders() })
       showToast('Notification updated successfully')
     } else {
-      await axios.post('http://localhost:8000/api/notifications', payload, { headers: getHeaders() })
+      await axios.post('/api/notifications', payload, { headers: getHeaders() })
       showToast('Notification created successfully')
     }
     showNotificationModal.value = false

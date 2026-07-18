@@ -410,11 +410,11 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 const fetchSettingsData = async () => {
   try {
     const [channelsRes, dsRes, cvRes, pluginsRes, reposRes] = await Promise.all([
-      axios.get('http://localhost:8000/api/channels', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/data-sources', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/custom-variables', { headers: getHeaders() }),
-      axios.get('http://localhost:8000/api/channels/plugins', { headers: getHeaders() }), // This endpoint returns ALL plugins now
-      axios.get('http://localhost:8000/api/repositories', { headers: getHeaders() })
+      axios.get('/api/channels', { headers: getHeaders() }),
+      axios.get('/api/data-sources', { headers: getHeaders() }),
+      axios.get('/api/custom-variables', { headers: getHeaders() }),
+      axios.get('/api/channels/plugins', { headers: getHeaders() }), // This endpoint returns ALL plugins now
+      axios.get('/api/repositories', { headers: getHeaders() })
     ])
     
     channels.value = channelsRes.data
@@ -438,7 +438,7 @@ onMounted(() => {
 // Repositories logic
 const addRepository = async () => {
   try {
-    await axios.post('http://localhost:8000/api/repositories', repoForm.value, { headers: getHeaders() })
+    await axios.post('/api/repositories', repoForm.value, { headers: getHeaders() })
     showAddRepoModal.value = false
     repoForm.value = { name: '', url: '' }
     await fetchSettingsData()
@@ -454,7 +454,7 @@ const confirmDeleteRepo = (repo) => {
     message: `Are you sure you want to delete ${repo.name}? This will not remove installed plugins, but will prevent future updates.`,
     onConfirm: async () => {
       try {
-        await axios.delete(`http://localhost:8000/api/repositories/${repo.id}`, { headers: getHeaders() })
+        await axios.delete(`/api/repositories/${repo.id}`, { headers: getHeaders() })
         showConfirmModal.value = false
         await fetchSettingsData()
         showToast('Repository deleted')
@@ -472,7 +472,7 @@ const viewRepoPlugins = async (repo) => {
   loadingPlugins.value = true
   repoPlugins.value = []
   try {
-    const res = await axios.get(`http://localhost:8000/api/repositories/${repo.id}/plugins`, { headers: getHeaders() })
+    const res = await axios.get(`/api/repositories/${repo.id}/plugins`, { headers: getHeaders() })
     repoPlugins.value = res.data
   } catch(e) {
     showToast('Failed to load plugins', 'error')
@@ -483,7 +483,7 @@ const viewRepoPlugins = async (repo) => {
 
 const installPlugin = async (plugin) => {
   try {
-    await axios.post('http://localhost:8000/api/repositories/install', { plugin_id: plugin.id, version: plugin.version, full_file_url: plugin.full_file_url }, { headers: getHeaders() })
+    await axios.post('/api/repositories/install', { plugin_id: plugin.id, version: plugin.version, full_file_url: plugin.full_file_url }, { headers: getHeaders() })
     plugin.is_installed = true
     plugin.installed_version = plugin.version
     await fetchSettingsData()
@@ -495,7 +495,7 @@ const installPlugin = async (plugin) => {
 
 const uninstallPlugin = async (plugin) => {
   try {
-    await axios.post('http://localhost:8000/api/repositories/uninstall', { plugin_id: plugin.id }, { headers: getHeaders() })
+    await axios.post('/api/repositories/uninstall', { plugin_id: plugin.id }, { headers: getHeaders() })
     plugin.is_installed = false
     plugin.installed_version = null
     await fetchSettingsData()
@@ -524,7 +524,7 @@ const confirmDeleteChannel = (channel) => {
     message: `Are you sure you want to delete ${channel.name}? All associated notifications will also be deleted.`,
     onConfirm: async () => {
       try {
-        await axios.delete(`http://localhost:8000/api/channels/${channel.id}`, { headers: getHeaders() })
+        await axios.delete(`/api/channels/${channel.id}`, { headers: getHeaders() })
         showConfirmModal.value = false
         await fetchSettingsData()
         showToast('Channel deleted')
@@ -540,9 +540,9 @@ const saveChannel = async () => {
   try {
     channelForm.value.is_active = true; 
     if (editingChannel.value) {
-      await axios.put(`http://localhost:8000/api/channels/${editingChannel.value.id}`, channelForm.value, { headers: getHeaders() })
+      await axios.put(`/api/channels/${editingChannel.value.id}`, channelForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('http://localhost:8000/api/channels', channelForm.value, { headers: getHeaders() })
+      await axios.post('/api/channels', channelForm.value, { headers: getHeaders() })
     }
     showChannelModal.value = false
     await fetchSettingsData()
@@ -555,7 +555,7 @@ const saveChannel = async () => {
 const testChannel = async () => {
   if (!channelForm.value.plugin_id) return
   try {
-    await axios.post('http://localhost:8000/api/channels/test', channelForm.value, { headers: getHeaders() })
+    await axios.post('/api/channels/test', channelForm.value, { headers: getHeaders() })
     showToast('Test notification sent successfully!', 'success')
   } catch(e) {
     showToast(e.response?.data?.detail || 'Test notification failed', 'error')
@@ -588,7 +588,7 @@ const confirmDeleteDataSource = (ds) => {
     message: `Are you sure you want to delete ${ds.name}? Notifications relying on its context variables will no longer be able to resolve them.`,
     onConfirm: async () => {
       try {
-        await axios.delete(`http://localhost:8000/api/data-sources/${ds.id}`, { headers: getHeaders() })
+        await axios.delete(`/api/data-sources/${ds.id}`, { headers: getHeaders() })
         showConfirmModal.value = false
         await fetchSettingsData()
         showToast('Data source deleted')
@@ -604,9 +604,9 @@ const saveDataSource = async () => {
   try {
     dsForm.value.is_active = true; 
     if (editingDataSource.value) {
-      await axios.put(`http://localhost:8000/api/data-sources/${editingDataSource.value.id}`, dsForm.value, { headers: getHeaders() })
+      await axios.put(`/api/data-sources/${editingDataSource.value.id}`, dsForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('http://localhost:8000/api/data-sources', dsForm.value, { headers: getHeaders() })
+      await axios.post('/api/data-sources', dsForm.value, { headers: getHeaders() })
     }
     showDataSourceModal.value = false
     await fetchSettingsData()
@@ -621,7 +621,7 @@ const testDataSource = async () => {
   isTestingDataSource.value = true
   testDataSourceResults.value = null
   try {
-    const res = await axios.post('http://localhost:8000/api/data-sources/test', dsForm.value, { headers: getHeaders() })
+    const res = await axios.post('/api/data-sources/test', dsForm.value, { headers: getHeaders() })
     testDataSourceResults.value = res.data.context
     showToast('Test connection successful!', 'success')
   } catch(e) {
@@ -650,7 +650,7 @@ const confirmDeleteVariable = (cv) => {
     message: `Are you sure you want to delete '{${cv.name}}'? Notifications using it will no longer resolve it.`,
     onConfirm: async () => {
       try {
-        await axios.delete(`http://localhost:8000/api/custom-variables/${cv.id}`, { headers: getHeaders() })
+        await axios.delete(`/api/custom-variables/${cv.id}`, { headers: getHeaders() })
         showConfirmModal.value = false
         await fetchSettingsData()
         showToast('Variable deleted')
@@ -667,9 +667,9 @@ const saveVariable = async () => {
     // Basic sanitization
     cvForm.value.name = cvForm.value.name.replace(/[^a-zA-Z0-9_]/g, '')
     if (editingVariable.value) {
-      await axios.put(`http://localhost:8000/api/custom-variables/${editingVariable.value.id}`, cvForm.value, { headers: getHeaders() })
+      await axios.put(`/api/custom-variables/${editingVariable.value.id}`, cvForm.value, { headers: getHeaders() })
     } else {
-      await axios.post('http://localhost:8000/api/custom-variables', cvForm.value, { headers: getHeaders() })
+      await axios.post('/api/custom-variables', cvForm.value, { headers: getHeaders() })
     }
     showVariableModal.value = false
     await fetchSettingsData()

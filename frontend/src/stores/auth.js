@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', {
       formData.append('username', email)
       formData.append('password', password)
 
-      const response = await axios.post('http://localhost:8000/api/auth/login', formData)
+      const response = await axios.post('/api/auth/login', formData)
       this.token = response.data.access_token
       localStorage.setItem('token', this.token)
       await this.fetchUser()
@@ -20,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchUser() {
       if (!this.token) return
       try {
-        const response = await axios.get('http://localhost:8000/api/auth/me', {
+        const response = await axios.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${this.token}` }
         })
         this.user = response.data

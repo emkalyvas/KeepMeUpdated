@@ -69,7 +69,7 @@ const handleRegister = async () => {
   errorMessage.value = ''
   isLoading.value = true
   try {
-    await axios.post('http://localhost:8000/api/auth/register', {
+    await axios.post('/api/auth/register', {
       email: email.value,
       password: password.value
     })
