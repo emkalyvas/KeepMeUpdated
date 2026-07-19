@@ -1,7 +1,10 @@
 import os
 import json
 import httpx
+import sys
+import subprocess
 import importlib.util
+import importlib.metadata
 from typing import Type, Dict, List
 from sqlalchemy.future import select
 
@@ -141,7 +144,24 @@ class PluginManager:
                 print(f"Error fetching repo plugins {repo.url}: {e}")
         return []
 
-    async def install_plugin(self, plugin_id: str, version: str, full_file_url: str) -> bool:
+    async def install_plugin(self, plugin_id: str, version: str, full_file_url: str, requirements: List[str] = None) -> bool:
+        if requirements:
+            missing_reqs = []
+            for req in requirements:
+                pkg_name = req.split("=")[0].split(">")[0].split("<")[0].strip()
+                try:
+                    importlib.metadata.version(pkg_name)
+                except importlib.metadata.PackageNotFoundError:
+                    missing_reqs.append(req)
+                    
+            if missing_reqs:
+                try:
+                    print(f"Installing missing dependencies for {plugin_id}: {missing_reqs}")
+                    subprocess.run([sys.executable, "-m", "pip", "install", *missing_reqs], check=True)
+                except Exception as e:
+                    print(f"Failed to install dependencies for {plugin_id}: {e}")
+                    return False
+
         os.makedirs(PLUGINS_DIR, exist_ok=True)
         filename = full_file_url.split("/")[-1]
         filepath = os.path.join(PLUGINS_DIR, filename)

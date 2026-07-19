@@ -154,6 +154,7 @@ class PluginInstallRequest(BaseModel):
     plugin_id: str
     version: str
     full_file_url: str
+    requirements: Optional[List[str]] = []
 
 class PluginUninstallRequest(BaseModel):
     plugin_id: str

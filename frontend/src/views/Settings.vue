@@ -258,6 +258,12 @@
     <div v-if="showAddRepoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div class="bg-gray-800 p-8 rounded-2xl max-w-lg w-full border border-gray-600 shadow-2xl">
         <h3 class="text-2xl font-bold mb-6 text-white">Add Repository</h3>
+        <div class="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg mb-6 flex items-start space-x-3">
+          <svg class="w-6 h-6 text-yellow-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <p class="text-yellow-400 text-sm leading-relaxed">
+            <strong class="font-bold">Security Warning:</strong> Only add repositories from trusted sources. Installing plugins may execute arbitrary code and dynamically install python dependencies on your server.
+          </p>
+        </div>
         <form @submit.prevent="addRepository" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Repository Name</label>
@@ -306,6 +312,7 @@
             <div>
               <span class="font-semibold text-lg block">{{ plugin.name }} <span class="text-xs text-gray-400 ml-2">v{{ plugin.version }}</span></span>
               <span class="text-sm text-gray-300 block mt-1">{{ plugin.description }}</span>
+              <span v-if="plugin.requirements && plugin.requirements.length > 0" class="text-xs text-indigo-300 block mt-2 font-medium">Requires: {{ plugin.requirements.join(', ') }}</span>
             </div>
             <div class="ml-4 flex-shrink-0 flex items-center space-x-2">
               <template v-if="plugin.is_installed">
@@ -483,7 +490,15 @@ const viewRepoPlugins = async (repo) => {
 
 const installPlugin = async (plugin) => {
   try {
-    await axios.post('/api/repositories/install', { plugin_id: plugin.id, version: plugin.version, full_file_url: plugin.full_file_url }, { headers: getHeaders() })
+    const payload = { 
+      plugin_id: plugin.id, 
+      version: plugin.version, 
+      full_file_url: plugin.full_file_url 
+    };
+    if (plugin.requirements) {
+      payload.requirements = plugin.requirements;
+    }
+    await axios.post('/api/repositories/install', payload, { headers: getHeaders() })
     plugin.is_installed = true
     plugin.installed_version = plugin.version
     await fetchSettingsData()

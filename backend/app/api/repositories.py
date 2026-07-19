@@ -39,7 +39,12 @@ async def install_plugin(
     current_user: models.User = Depends(deps.get_current_active_user)
 ) -> Any:
     from app.plugins.manager import plugin_manager
-    success = await plugin_manager.install_plugin(install_req.plugin_id, install_req.version, install_req.full_file_url)
+    success = await plugin_manager.install_plugin(
+        install_req.plugin_id, 
+        install_req.version, 
+        install_req.full_file_url,
+        install_req.requirements
+    )
     if not success:
         raise HTTPException(status_code=400, detail="Failed to install plugin")
     return {"status": "ok", "message": "Plugin installed successfully"}
