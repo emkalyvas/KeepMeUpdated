@@ -48,6 +48,22 @@ async def test_channel(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/options/{plugin_id}/{field_name}", response_model=List[Any])
+async def get_plugin_options(
+    plugin_id: str,
+    field_name: str,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    plugin_class = plugin_manager.get_channel_plugin(plugin_id)
+    if not plugin_class:
+        raise HTTPException(status_code=400, detail="Invalid plugin_id")
+        
+    try:
+        options = await plugin_class.get_dynamic_options(field_name)
+        return options
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/", response_model=schemas.ChannelResponse)
 async def create_channel(
     channel_in: schemas.ChannelCreate,

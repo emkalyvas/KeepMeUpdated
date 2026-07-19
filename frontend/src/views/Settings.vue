@@ -143,6 +143,16 @@
               <select v-if="field.enum" v-model="channelForm.config[key]" :required="selectedChannelSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option v-for="option in field.enum" :key="option" :value="option">{{ option }}</option>
               </select>
+              <div v-else-if="field.dynamic_options" class="flex items-center space-x-2">
+                <select v-if="dynamicOptionsCache[channelForm.plugin_id + '_' + key]" v-model="channelForm.config[key]" :required="selectedChannelSchema.required?.includes(key)" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option v-for="opt in dynamicOptionsCache[channelForm.plugin_id + '_' + key]" :key="opt" :value="opt">{{ opt }}</option>
+                </select>
+                <input v-else v-model="channelForm.config[key]" type="text" :required="selectedChannelSchema.required?.includes(key)" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="button" @click="fetchDynamicOptions(channelForm.plugin_id, key)" :disabled="isFetchingOptions[channelForm.plugin_id + '_' + key]" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg transition-colors shadow-md text-sm font-medium whitespace-nowrap flex items-center justify-center min-w-[80px]">
+                  <span v-if="isFetchingOptions[channelForm.plugin_id + '_' + key]">Scanning...</span>
+                  <span v-else>Scan</span>
+                </button>
+              </div>
               <input v-else-if="field.type === 'string' && field.format !== 'password'" v-model="channelForm.config[key]" type="text" :required="selectedChannelSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <input v-else-if="field.type === 'string' && field.format === 'password'" v-model="channelForm.config[key]" type="password" :required="selectedChannelSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <input v-else-if="field.type === 'integer'" v-model.number="channelForm.config[key]" type="number" :required="selectedChannelSchema.required?.includes(key)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -353,6 +363,23 @@ const repositories = ref([])
 const showChannelModal = ref(false)
 const editingChannel = ref(null)
 const channelForm = ref({ plugin_id: '', name: '', config: {}, is_active: true })
+
+const dynamicOptionsCache = ref({})
+const isFetchingOptions = ref({})
+
+const fetchDynamicOptions = async (pluginId, fieldName) => {
+  const cacheKey = `${pluginId}_${fieldName}`
+  isFetchingOptions.value[cacheKey] = true
+  try {
+    const res = await axios.get(`/api/channels/options/${pluginId}/${fieldName}`, { headers: getHeaders() })
+    dynamicOptionsCache.value[cacheKey] = res.data
+    showToast('Scan complete')
+  } catch (e) {
+    showToast('Failed to fetch options', 'error')
+  } finally {
+    isFetchingOptions.value[cacheKey] = false
+  }
+}
 
 const showDataSourceModal = ref(false)
 const editingDataSource = ref(null)

@@ -29,6 +29,13 @@ class BaseNotificationChannel:
         """
         return {}
         
+    @classmethod
+    async def get_dynamic_options(cls, field_name: str) -> list:
+        """
+        Returns a dynamic list of options for a given field name.
+        """
+        return []
+        
     def __init__(self, config: Dict[str, Any]):
         """Initialize with the user's saved JSON config."""
         self.config = config
@@ -71,6 +78,13 @@ class BaseDataSourcePlugin:
         Example: [{"name": "temperature", "description": "Current temp", "example": "22°C"}]
         """
         raise NotImplementedError
+        
+    @classmethod
+    async def get_dynamic_options(cls, field_name: str) -> list:
+        """
+        Returns a dynamic list of options for a given field name.
+        """
+        return []
         
     def __init__(self, config: Dict[str, Any]):
         """Initialize with the user's saved JSON config."""
