@@ -49,6 +49,7 @@ You can build a plugin by creating a Python file that inherits from either `Base
 - **Data Sources** implement schemas for fetching dynamic data and returning context variables.
 
 Place your plugin script and a `registry.json` file on a simple HTTP server to be fetched by the app.
+Take as an example the [official plugin repo here](https://github.com/emkalyvas/KeepMeUpdated-plugins).
 
 ## License
 MIT
