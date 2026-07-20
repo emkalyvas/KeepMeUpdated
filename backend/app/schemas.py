@@ -158,3 +158,23 @@ class PluginInstallRequest(BaseModel):
 
 class PluginUninstallRequest(BaseModel):
     plugin_id: str
+
+# --- API Token Schemas ---
+class ApiTokenBase(BaseModel):
+    name: str
+    expires_at: Optional[datetime] = None
+
+class ApiTokenCreate(ApiTokenBase):
+    pass
+
+class ApiTokenResponse(ApiTokenBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ApiTokenCreateResponse(ApiTokenResponse):
+    token: str

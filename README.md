@@ -14,6 +14,8 @@ Built with a modular Plugin Architecture, you can extend your notification desti
 - **Context Variables**: Enrich your notification payloads with dynamic data variables.
 - **Modern UI**: A beautiful Vue 3 + Tailwind CSS dark-mode dashboard with custom-built sleek Modals.
 - **Fully Dockerized**: Spin up the backend and frontend effortlessly with Docker Compose.
+- **REST API**: Fully documented API with token-based authentication for external integrations. (See [API Documentation](API.md))
+
 
 ## Getting Started
 

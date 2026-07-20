@@ -117,6 +117,29 @@
         </ul>
       </section>
 
+      <!-- API Tokens Section -->
+      <section class="bg-gray-800 rounded-xl p-6 shadow-2xl border border-gray-700">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">API Tokens</h2>
+          <button @click="openAddApiToken" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105">+ Generate Token</button>
+        </div>
+        <div v-if="apiTokens.length === 0" class="text-gray-400 text-center py-8 bg-gray-700/30 rounded-lg border border-dashed border-gray-600">No API tokens generated. Create one to authenticate external systems.</div>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <li v-for="token in apiTokens" :key="token.id" class="flex flex-col bg-gray-700 p-5 rounded-lg border border-gray-600 hover:border-indigo-500 transition-colors group">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="font-semibold text-lg">{{ token.name }}</span>
+                <span class="block text-sm text-gray-400 mt-1">Created: {{ new Date(token.created_at).toLocaleDateString() }}</span>
+                <span class="block text-sm text-gray-400">Expires: {{ token.expires_at ? new Date(token.expires_at).toLocaleDateString() : 'Never' }}</span>
+              </div>
+              <div class="flex items-center space-x-3 mt-1">
+                <button @click="confirmDeleteApiToken(token)" class="text-gray-400 hover:text-red-400 transition-colors text-sm">Revoke</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </section>
+
     </main>
 
     <!-- Channel Modal -->
@@ -264,6 +287,47 @@
       </div>
     </div>
 
+    <!-- Add API Token Modal -->
+    <div v-if="showApiTokenModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-800 p-8 rounded-2xl max-w-lg w-full border border-gray-600 shadow-2xl">
+        <h3 class="text-2xl font-bold mb-6 text-white">Generate API Token</h3>
+        <form @submit.prevent="saveApiToken" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Token Name</label>
+            <input v-model="apiTokenForm.name" type="text" required placeholder="e.g. Home Assistant Integration" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Expiration Date (Optional)</label>
+            <input v-model="apiTokenForm.expires_at" type="date" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div class="flex justify-end gap-3 mt-8">
+            <button type="button" @click="showApiTokenModal = false" class="px-5 py-2 text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">Cancel</button>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors shadow-md">Generate</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Generated Token Display Modal -->
+    <div v-if="generatedToken" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-800 p-8 rounded-2xl max-w-lg w-full border border-gray-600 shadow-2xl">
+        <h3 class="text-2xl font-bold mb-4 text-white">Token Generated!</h3>
+        <div class="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg mb-6 flex items-start space-x-3">
+          <svg class="w-6 h-6 text-yellow-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <p class="text-yellow-400 text-sm leading-relaxed">
+            <strong class="font-bold">Important:</strong> Please copy this token now. You will not be able to see it again after closing this window.
+          </p>
+        </div>
+        <div class="relative mb-6">
+          <input type="text" readonly :value="generatedToken" class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-pink-300 font-mono text-sm focus:outline-none">
+          <button @click="copyTokenToClipboard" class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm transition-colors">Copy</button>
+        </div>
+        <div class="flex justify-end">
+          <button @click="generatedToken = null" class="px-5 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">I have copied it</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Repo Modal -->
     <div v-if="showAddRepoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div class="bg-gray-800 p-8 rounded-2xl max-w-lg w-full border border-gray-600 shadow-2xl">
@@ -362,6 +426,7 @@ const router = useRouter()
 const channels = ref([])
 const dataSources = ref([])
 const customVariables = ref([])
+const apiTokens = ref([])
 const availablePlugins = ref([])
 const repositories = ref([])
 
@@ -396,6 +461,10 @@ const isTestingDataSource = ref(false)
 const showVariableModal = ref(false)
 const editingVariable = ref(null)
 const cvForm = ref({ name: '', value: '' })
+
+const showApiTokenModal = ref(false)
+const apiTokenForm = ref({ name: '', expires_at: '' })
+const generatedToken = ref(null)
 
 const showAddRepoModal = ref(false)
 const repoForm = ref({ name: '', url: '' })
@@ -450,10 +519,11 @@ const getHeaders = () => ({ Authorization: `Bearer ${authStore.token}` })
 
 const fetchSettingsData = async () => {
   try {
-    const [channelsRes, dsRes, cvRes, pluginsRes, reposRes] = await Promise.all([
+    const [channelsRes, dsRes, cvRes, apiTokensRes, pluginsRes, reposRes] = await Promise.all([
       axios.get('/api/channels/', { headers: getHeaders() }),
       axios.get('/api/data-sources/', { headers: getHeaders() }),
       axios.get('/api/custom-variables/', { headers: getHeaders() }),
+      axios.get('/api/api-tokens/', { headers: getHeaders() }),
       axios.get('/api/channels/plugins', { headers: getHeaders() }), // This endpoint returns ALL plugins now
       axios.get('/api/repositories/', { headers: getHeaders() })
     ])
@@ -461,6 +531,7 @@ const fetchSettingsData = async () => {
     channels.value = channelsRes.data
     dataSources.value = dsRes.data
     customVariables.value = cvRes.data
+    apiTokens.value = apiTokensRes.data
     availablePlugins.value = pluginsRes.data
     repositories.value = reposRes.data
   } catch (error) {
@@ -728,6 +799,57 @@ const saveVariable = async () => {
     showToast('Variable saved successfully')
   } catch(e) {
     showToast(e.response?.data?.detail || 'Failed to save variable', 'error')
+  }
+}
+
+// API Tokens Logic
+const openAddApiToken = () => {
+  apiTokenForm.value = { name: '', expires_at: '' }
+  showApiTokenModal.value = true
+}
+
+const saveApiToken = async () => {
+  try {
+    const payload = { ...apiTokenForm.value }
+    if (!payload.expires_at) {
+      delete payload.expires_at
+    } else {
+      payload.expires_at = new Date(payload.expires_at).toISOString()
+    }
+    const res = await axios.post('/api/api-tokens/', payload, { headers: getHeaders() })
+    showApiTokenModal.value = false
+    generatedToken.value = res.data.token
+    await fetchSettingsData()
+    showToast('API token generated successfully')
+  } catch(e) {
+    showToast(e.response?.data?.detail || 'Failed to generate token', 'error')
+  }
+}
+
+const confirmDeleteApiToken = (token) => {
+  confirmModalState.value = {
+    title: 'Revoke API Token',
+    message: `Are you sure you want to revoke '${token.name}'? Systems using this token will immediately lose access.`,
+    onConfirm: async () => {
+      try {
+        await axios.delete(`/api/api-tokens/${token.id}`, { headers: getHeaders() })
+        showConfirmModal.value = false
+        await fetchSettingsData()
+        showToast('API token revoked')
+      } catch(e) {
+        showToast('Failed to revoke token', 'error')
+      }
+    }
+  }
+  showConfirmModal.value = true
+}
+
+const copyTokenToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(generatedToken.value)
+    showToast('Token copied to clipboard')
+  } catch(e) {
+    showToast('Failed to copy token', 'error')
   }
 }
 </script>

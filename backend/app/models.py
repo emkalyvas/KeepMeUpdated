@@ -27,6 +27,7 @@ class User(Base):
     data_sources = relationship("DataSource", back_populates="owner", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
     custom_variables = relationship("CustomVariable", back_populates="owner", cascade="all, delete-orphan")
+    api_tokens = relationship("ApiToken", back_populates="owner", cascade="all, delete-orphan")
 
 class Channel(Base):
     __tablename__ = "channels"
@@ -100,3 +101,16 @@ class CustomVariable(Base):
     updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
 
     owner = relationship("User", back_populates="custom_variables")
+
+class ApiToken(Base):
+    __tablename__ = "api_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String)
+    token_hash = Column(String)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now)
+    updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
+
+    owner = relationship("User", back_populates="api_tokens")
