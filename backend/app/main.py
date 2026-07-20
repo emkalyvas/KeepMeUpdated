@@ -28,7 +28,13 @@ async def lifespan(app: FastAPI):
     
     yield
 
-app = FastAPI(title="KeepMeUpdated API", lifespan=lifespan)
+app = FastAPI(
+    title="KeepMeUpdated API", 
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    redoc_url="/api/redoc"
+)
 
 # CORS
 origins = [
