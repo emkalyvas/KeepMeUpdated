@@ -43,8 +43,11 @@ async def create_api_token(
     await db.commit()
     await db.refresh(new_token)
     
-    response = schemas.ApiTokenCreateResponse.model_validate(new_token)
-    response.token = raw_token
+    base_response = schemas.ApiTokenResponse.model_validate(new_token)
+    response = schemas.ApiTokenCreateResponse(
+        **base_response.model_dump(),
+        token=raw_token
+    )
     return response
 
 @router.delete("/{token_id}")
