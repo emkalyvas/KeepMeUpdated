@@ -9,7 +9,7 @@ A powerful, self-hosted scheduling and notification platform. KeepMeUpdated allo
 Built with a modular Plugin Architecture, you can extend your notification destinations without touching the core backend codebase!
 
 ## Features
-- **Centralized Notification Engine**: Schedule alerts via Specific Time, Intervals, or Cron Expressions.
+- **Centralized Notification Engine**: Schedule alerts via Specific Time, Intervals, Cron Expressions, or trigger them instantly via unique Webhook URLs.
 - **Dynamic Plugin Architecture**: Download and run third-party Notification Channels (like Gotify) and Data Sources (like OpenWeatherMap) dynamically at runtime.
 - **Context Variables**: Enrich your notification payloads with dynamic data variables.
 - **Modern UI**: A beautiful Vue 3 + Tailwind CSS dark-mode dashboard with custom-built sleek Modals.

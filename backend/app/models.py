@@ -12,6 +12,7 @@ class ScheduleType(str, enum.Enum):
     specific_time = "specific_time"
     cron = "cron"
     interval = "interval"
+    webhook = "webhook"
 
 class User(Base):
     __tablename__ = "users"

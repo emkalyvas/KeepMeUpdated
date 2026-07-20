@@ -1,6 +1,7 @@
 from typing import Any, List
 from datetime import datetime, timezone, timedelta
 import dateutil.parser
+import uuid
 from croniter import croniter
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,6 +57,9 @@ def is_excluded(dt: datetime, exclusions: List[dict] = None) -> bool:
     return False
 
 def calculate_next_run(schedule_type: str, schedule_expr: str, base_time: datetime = None, exclusions: List[dict] = None, start_time: datetime = None, is_initial: bool = False):
+    if schedule_type == "webhook":
+        return None
+
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     
     if start_time and start_time.tzinfo:
@@ -160,7 +164,11 @@ async def create_notification(
     if not c_res.scalars().first():
         raise HTTPException(status_code=400, detail="Invalid channel_id")
 
-    db_notif = models.Notification(**notif_in.model_dump(), user_id=current_user.id)
+    notif_data = notif_in.model_dump()
+    if notif_data.get("schedule_type") == "webhook":
+        notif_data["schedule_expr"] = str(uuid.uuid4())
+        
+    db_notif = models.Notification(**notif_data, user_id=current_user.id)
     if db_notif.is_active:
         db_notif.next_run_at = calculate_next_run(db_notif.schedule_type, db_notif.schedule_expr, None, db_notif.exclusions, db_notif.start_time, True)
     else:
@@ -199,6 +207,12 @@ async def update_notification(
     was_active = db_notif.is_active
             
     for field, value in update_data.items():
+        if field == "schedule_type" and value == "webhook" and db_notif.schedule_type != "webhook":
+            db_notif.schedule_expr = str(uuid.uuid4())
+            continue
+        elif field == "schedule_type" and value != "webhook" and db_notif.schedule_type == "webhook":
+            # Just let it update schedule_type, schedule_expr is also updated
+            pass
         setattr(db_notif, field, value)
         
     is_now_active = db_notif.is_active

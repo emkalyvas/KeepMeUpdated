@@ -2,7 +2,7 @@ import contextlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, channels, data_sources, custom_variables, context, notifications, repositories, api_tokens
+from app.api import auth, channels, data_sources, custom_variables, context, notifications, repositories, api_tokens, webhooks
 from app.database import engine, Base, SessionLocal
 from app.models import Repository
 from sqlalchemy.future import select
@@ -58,6 +58,7 @@ app.include_router(context.router, prefix="/api/context", tags=["context"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(repositories.router, prefix="/api/repositories", tags=["repositories"])
 app.include_router(api_tokens.router, prefix="/api/api-tokens", tags=["api-tokens"])
+app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 
 @app.get("/api/health")
 def health_check():
