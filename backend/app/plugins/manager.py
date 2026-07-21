@@ -21,8 +21,14 @@ class PluginManager:
         
         if not os.path.exists(PLUGINS_DIR):
             os.makedirs(PLUGINS_DIR, exist_ok=True)
-        else:
-            self.load_local_plugins()
+            
+        libs_dir = os.path.join(PLUGINS_DIR, "libs")
+        if not os.path.exists(libs_dir):
+            os.makedirs(libs_dir, exist_ok=True)
+        if libs_dir not in sys.path:
+            sys.path.insert(0, libs_dir)
+            
+        self.load_local_plugins()
         
     def register_channel_plugin(self, plugin_class: Type[BaseNotificationChannel]):
         self._channel_plugins[plugin_class.get_plugin_id()] = plugin_class
@@ -157,7 +163,8 @@ class PluginManager:
             if missing_reqs:
                 try:
                     print(f"Installing missing dependencies for {plugin_id}: {missing_reqs}")
-                    subprocess.run([sys.executable, "-m", "pip", "install", *missing_reqs], check=True)
+                    libs_dir = os.path.join(PLUGINS_DIR, "libs")
+                    subprocess.run([sys.executable, "-m", "pip", "install", "--target", libs_dir, *missing_reqs], check=True)
                 except Exception as e:
                     print(f"Failed to install dependencies for {plugin_id}: {e}")
                     return False
